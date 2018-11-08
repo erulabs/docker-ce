@@ -566,7 +566,9 @@ func (c *client) CreateCheckpoint(ctx context.Context, containerID, checkpointDi
 		return err
 	}
 
-	opts := []containerd.CheckpointTaskOpts{}
+	opts := []containerd.CheckpointTaskOpts{
+		containerd.WithEmptyNamespace("network"),
+	}
 	if exit {
 		opts = append(opts, func(r *containerd.CheckpointTaskInfo) error {
 			if r.Options == nil {
