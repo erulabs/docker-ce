@@ -26,6 +26,7 @@ import (
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/runtime/linux/runctypes"
 	"github.com/containerd/containerd/mount"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -39,6 +40,27 @@ type NewTaskOpts func(context.Context, *Client, *TaskInfo) error
 func WithRootFS(mounts []mount.Mount) NewTaskOpts {
 	return func(ctx context.Context, c *Client, ti *TaskInfo) error {
 		ti.RootFS = mounts
+		return nil
+	}
+}
+
+func getCheckpointOptions(r *CheckpointTaskInfo) *runctypes.CheckpointOptions {
+	var opts *runctypes.CheckpointOptions
+	if r.Options == nil {
+		opts = &runctypes.CheckpointOptions{}
+		r.Options = opts
+	} else {
+		opts, _ = r.Options.(*runctypes.CheckpointOptions)
+	}
+	return opts
+}
+
+// WithEmptyNamespace specifies a namespace which is restored externally
+func WithEmptyNamespace(ns string) CheckpointTaskOpts {
+	return func(r *CheckpointTaskInfo) error {
+		opts := getCheckpointOptions(r)
+		opts.EmptyNamespaces = append(opts.EmptyNamespaces, ns)
+
 		return nil
 	}
 }
