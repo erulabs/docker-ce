@@ -25,6 +25,7 @@ import (
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/runtime/linux/runctypes"
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/mount"
 	imagespec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -79,6 +80,28 @@ func decodeIndex(ctx context.Context, store content.Provider, desc imagespec.Des
 	}
 
 	return &index, nil
+}
+
+
+func getCheckpointOptions(r *CheckpointTaskInfo) *runctypes.CheckpointOptions {
+	var opts *runctypes.CheckpointOptions
+	if r.Options == nil {
+		opts = &runctypes.CheckpointOptions{}
+		r.Options = opts
+	} else {
+		opts, _ = r.Options.(*runctypes.CheckpointOptions)
+	}
+	return opts
+}
+
+// WithEmptyNamespace specifies a namespace which is restored externally
+func WithEmptyNamespace(ns string) CheckpointTaskOpts {
+	return func(r *CheckpointTaskInfo) error {
+		opts := getCheckpointOptions(r)
+		opts.EmptyNamespaces = append(opts.EmptyNamespaces, ns)
+
+		return nil
+	}
 }
 
 // WithCheckpointName sets the image name for the checkpoint
